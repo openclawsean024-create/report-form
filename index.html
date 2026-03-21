@@ -331,11 +331,6 @@
 
 
                 <div class="form-group">
-                    <label for="contact">聯絡方式</label>
-                    <input type="text" id="contact" name="contact" placeholder="電話 / Email / LINE（選填）">
-                </div>
-
-                <div class="form-group">
                     <label for="content">反應內容 <span class="required">*</span></label>
                     <textarea id="content" name="content" required placeholder="請詳細描述問題情況"></textarea>
                 </div>
@@ -385,7 +380,6 @@
             return {
                 reporter: document.getElementById('reporter').value,
                 title: document.getElementById('title').value,
-                contact: document.getElementById('contact').value,
                 content: document.getElementById('content').value,
                 savedAt: new Date().toISOString()
             };
@@ -403,7 +397,6 @@
                 if (!draft) return;
                 document.getElementById('reporter').value = draft.reporter || '';
                 document.getElementById('title').value = draft.title || '';
-                document.getElementById('contact').value = draft.contact || '';
                 document.getElementById('content').value = draft.content || '';
             } catch (_) {}
         }
@@ -495,7 +488,6 @@
             formData.append('reporter', document.getElementById('reporter').value);
             formData.append('title', document.getElementById('title').value);
             formData.append('content', document.getElementById('content').value);
-            formData.append('contact', document.getElementById('contact').value);
             
             // 壓縮圖片函數
             async function compressImage(file) {
