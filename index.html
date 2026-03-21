@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>問題回報表單</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 50%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 
+                0 1px 3px rgba(0, 0, 0, 0.05),
+                0 8px 32px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 32px 32px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        form {
+            padding: 24px 32px 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        label .required {
+            color: var(--error);
+            margin-left: 2px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.02);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .upload-area.has-file {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            color: var(--text-muted);
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .upload-text strong {
+            color: var(--primary);
+        }
+
+        .file-name {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .image-preview {
+            margin-top: 12px;
+            display: none;
+        }
+
+        .image-preview.show {
+            display: block;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-preview .preview-item {
+            display: inline-block;
+            margin: 4px;
+            position: relative;
+        }
+
+        .image-preview .preview-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .image-preview .remove-btn {
+            display: block;
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            color: white;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-btn .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .submit-btn.loading .spinner {
+            display: block;
+        }
+
+        .submit-btn.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header, form {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>燦坤問題回報</h1>
+                <p>請填寫以下表單，我們會盡快處理</p>
+            </div>
+            
+            <form id="reportForm">
+                <div class="message" id="message"></div>
+
+                <div class="form-group">
+                    <label for="reporter">商化 <span class="required">*</span></label>
+                    <input type="text" id="reporter" name="reporter" required placeholder="請輸入您的姓名">
+                </div>
+
+                <div class="form-group">
+                    <label for="title">巡訪門市 <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" required placeholder="填寫門市名稱">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">問題分類 <span class="required">*</span></label>
+                    <select id="category" name="category" required>
+                        <option value="陳列">陳列</option>
+                        <option value="價格">價格</option>
+                        <option value="庫存">庫存</option>
+                        <option value="人員">人員</option>
+                        <option value="設備">設備</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="priority">優先級</label>
+                    <select id="priority" name="priority">
+                        <option value="一般">一般</option>
+                        <option value="高">高</option>
+                        <option value="緊急">緊急</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact">聯絡方式</label>
+                    <input type="text" id="contact" name="contact" placeholder="電話 / Email / LINE（選填）">
+                </div>
+
+                <div class="form-group">
+                    <label for="content">反應內容 <span class="required">*</span></label>
+                    <textarea id="content" name="content" required placeholder="請詳細描述問題情況"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>上傳照片 <span class="required">*</span></label>
+                    <div class="upload-area" id="uploadArea">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <div class="upload-text">
+                            <strong>點擊上傳</strong> 或拖曳檔案至此<br>
+                            支援 JPG、PNG 格式
+                        </div>
+                        <div class="file-name" id="fileName"></div>
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                    <input type="file" id="photo" name="photo" accept="image/*,.heic,.heif" multiple>
+                </div>
+
+                <div style="display:flex;gap:12px;">
+                    <button type="button" class="submit-btn" style="background:#475569;" id="draftBtn">儲存草稿</button>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text">送出回報</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('reportForm');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('photo');
+        const fileName = document.getElementById('fileName');
+        const imagePreview = document.getElementById('imagePreview');
+        const message = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+        const draftBtn = document.getElementById('draftBtn');
+        const DRAFT_KEY = 'report-form-draft-v1';
+
+        // 上傳區域點擊
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        function getDraftPayload() {
+            return {
+                reporter: document.getElementById('reporter').value,
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                priority: document.getElementById('priority').value,
+                contact: document.getElementById('contact').value,
+                content: document.getElementById('content').value,
+                savedAt: new Date().toISOString()
+            };
+        }
+
+        function saveDraft() {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(getDraftPayload()));
+            message.textContent = '✓ 草稿已儲存到本機';
+            message.className = 'message show success';
+        }
+
+        function restoreDraft() {
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+                if (!draft) return;
+                document.getElementById('reporter').value = draft.reporter || '';
+                document.getElementById('title').value = draft.title || '';
+                document.getElementById('category').value = draft.category || '陳列';
+                document.getElementById('priority').value = draft.priority || '一般';
+                document.getElementById('contact').value = draft.contact || '';
+                document.getElementById('content').value = draft.content || '';
+            } catch (_) {}
+        }
+
+        draftBtn.addEventListener('click', saveDraft);
+        restoreDraft();
+
+        // 拖曳上傳
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileName(files);
+            }
+        });
+
+        // 檔案選擇
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                updateFileName(fileInput.files);
+            }
+        });
+
+        let uploadedFiles = [];
+
+        function updateFileName(files) {
+            uploadedFiles = Array.from(files);
+            if (uploadedFiles.length === 0) return;
+            
+            fileName.textContent = `已選擇 ${uploadedFiles.length} 張圖片`;
+            uploadArea.classList.add('has-file');
+            
+            // 顯示所有圖片預覽
+            imagePreview.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `<img src="${e.target.result}" alt="預覽 ${index + 1}">`;
+                        imagePreview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            imagePreview.classList.add('show');
+        }
+
+        function removeImage() {
+            fileInput.value = '';
+            uploadedFiles = [];
+            fileName.textContent = '';
+            imagePreview.innerHTML = '';
+            imagePreview.classList.remove('show');
+            uploadArea.classList.remove('has-file');
+        }
+
+        // 修改表單提交，使用 uploadedFiles
+        const originalSubmit = form;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!uploadedFiles || uploadedFiles.length === 0) {
+                message.className = 'message error';
+                message.textContent = '請上傳至少一張照片';
+                uploadArea.style.borderColor = '#ef4444';
+                return;
+            }
+            uploadArea.style.borderColor = '';
+
+            message.className = 'message';
+            message.textContent = '';
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('reporter', document.getElementById('reporter').value);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('content', document.getElementById('content').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('priority', document.getElementById('priority').value);
+            formData.append('contact', document.getElementById('contact').value);
+            
+            // 壓縮圖片函數
+            async function compressImage(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const maxSize = 1920;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > height && width > maxSize) {
+                                height = (height * maxSize) / width;
+                                width = maxSize;
+                            } else if (height > maxSize) {
+                                width = (width * maxSize) / height;
+                                height = maxSize;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            canvas.toBlob((blob) => {
+                                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                            }, 'image/jpeg', 0.8);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // 添加多個圖片（壓縮後）
+            const compressedFiles = await Promise.all(uploadedFiles.map(f => compressImage(f)));
+            compressedFiles.forEach(file => {
+                formData.append('photo', file);
+            });
+            
+            // 如果沒有上傳新檔案，使用原始 input
+            if (uploadedFiles.length === 0 && fileInput.files.length > 0) {
+                const compressedLegacy = await Promise.all(Array.from(fileInput.files).map(f => compressImage(f)));
+                compressedLegacy.forEach(file => {
+                    formData.append('photo', file);
+                });
+            }
+            
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const contentType = response.headers.get('content-type');
+                let result;
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(text || '提交失敗');
+                }
+
+                if (result.success) {
+                    message.textContent = '✓ 回報已送出！我們會盡快處理。';
+                    message.classList.add('show', 'success');
+                    form.reset();
+                    uploadArea.classList.remove('has-file');
+                    fileName.textContent = '';
+                    imagePreview.innerHTML = '';
+                    imagePreview.classList.remove('show');
+                    uploadedFiles = [];
+                    localStorage.removeItem(DRAFT_KEY);
+                } else {
+                    throw new Error(result.message || '提交失敗');
+                }
+            } catch (error) {
+                message.textContent = '✗ 提交失敗：' + error.message;
+                message.classList.add('show', 'error');
+            } finally {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
