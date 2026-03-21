@@ -328,26 +328,7 @@
                     <input type="text" id="title" name="title" required placeholder="填寫門市名稱">
                 </div>
 
-                <div class="form-group">
-                    <label for="category">問題分類 <span class="required">*</span></label>
-                    <select id="category" name="category" required>
-                        <option value="陳列">陳列</option>
-                        <option value="價格">價格</option>
-                        <option value="庫存">庫存</option>
-                        <option value="人員">人員</option>
-                        <option value="設備">設備</option>
-                        <option value="其他">其他</option>
-                    </select>
-                </div>
 
-                <div class="form-group">
-                    <label for="priority">優先級</label>
-                    <select id="priority" name="priority">
-                        <option value="一般">一般</option>
-                        <option value="高">高</option>
-                        <option value="緊急">緊急</option>
-                    </select>
-                </div>
 
                 <div class="form-group">
                     <label for="contact">聯絡方式</label>
@@ -404,8 +385,6 @@
             return {
                 reporter: document.getElementById('reporter').value,
                 title: document.getElementById('title').value,
-                category: document.getElementById('category').value,
-                priority: document.getElementById('priority').value,
                 contact: document.getElementById('contact').value,
                 content: document.getElementById('content').value,
                 savedAt: new Date().toISOString()
@@ -424,8 +403,6 @@
                 if (!draft) return;
                 document.getElementById('reporter').value = draft.reporter || '';
                 document.getElementById('title').value = draft.title || '';
-                document.getElementById('category').value = draft.category || '陳列';
-                document.getElementById('priority').value = draft.priority || '一般';
                 document.getElementById('contact').value = draft.contact || '';
                 document.getElementById('content').value = draft.content || '';
             } catch (_) {}
@@ -518,8 +495,6 @@
             formData.append('reporter', document.getElementById('reporter').value);
             formData.append('title', document.getElementById('title').value);
             formData.append('content', document.getElementById('content').value);
-            formData.append('category', document.getElementById('category').value);
-            formData.append('priority', document.getElementById('priority').value);
             formData.append('contact', document.getElementById('contact').value);
             
             // 壓縮圖片函數
