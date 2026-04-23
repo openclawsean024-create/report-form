@@ -6,7 +6,19 @@
       "use": "@vercel/static"
     },
     {
+      "src": "submit.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "status.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "api/submit.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/status.js",
       "use": "@vercel/node"
     }
   ],
@@ -14,6 +26,18 @@
     {
       "src": "/api/submit",
       "dest": "/api/submit.js"
+    },
+    {
+      "src": "/api/status",
+      "dest": "/api/status.js"
+    },
+    {
+      "src": "/submit",
+      "dest": "/submit.html"
+    },
+    {
+      "src": "/status",
+      "dest": "/status.html"
     },
     {
       "src": "/(.*)",

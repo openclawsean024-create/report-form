@@ -1,11 +1,41 @@
-const nodemailer = require('nodemailer');
-const multiparty = require('multiparty');
+import nodemailer from 'nodemailer';
+import multiparty from 'multiparty';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_FILE = path.join(__dirname, '..', 'data', 'reports.json');
 
 export const config = {
     api: {
         bodyParser: false,
     },
 };
+
+function generateTrackingId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let id = 'RPT-';
+    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+}
+
+function loadReports() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+        }
+    } catch (e) { console.error('Load error:', e); }
+    return {};
+}
+
+function saveReports(reports) {
+    try {
+        const dir = path.dirname(DATA_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(DATA_FILE, JSON.stringify(reports, null, 2));
+    } catch (e) { console.error('Save error:', e); }
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -14,7 +44,7 @@ export default async function handler(req, res) {
 
     return new Promise((resolve) => {
         const form = new multiparty.Form({
-            uploadDir: '/tmp',
+            uploadDir: '/tmp/uploads',
             maxFieldsSize: 10 * 1024 * 1024,
         });
 
@@ -34,6 +64,23 @@ export default async function handler(req, res) {
                 return resolve();
             }
 
+            const trackingId = generateTrackingId();
+            const submittedAt = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+
+            // Save to data store
+            const reports = loadReports();
+            reports[trackingId] = {
+                trackingId,
+                reporter,
+                title,
+                content,
+                photo: photo ? photo.originalFilename : null,
+                submittedAt,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            saveReports(reports);
+
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -44,65 +91,66 @@ export default async function handler(req, res) {
 
             const TARGET_EMAIL = process.env.TARGET_EMAIL;
 
-            let mailOptions = {
-                from: process.env.GMAIL_USER,
-                to: TARGET_EMAIL,
-                subject: `[門市巡訪回報] ${title}`,
-                html: `
-                    <div style="font-family: 'Noto Sans TC', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #2563eb; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
-                            📋 門市巡訪回報
-                        </h2>
-                        
-                        <p style="margin-top: 16px; font-size: 14px;">
-                            <strong>門市名稱：</strong>${title}<br>
-                            <strong>反應內容：</strong>
-                        </p>
-                        <div style="padding: 12px; background: #f; border-radius: 8px;8fafc margin: 8px 0 16px 0; white-space: pre-wrap; text-align: left;">
-                            ${content}
-                        </div>
-                        
-                        <table style="width: 100%; border-collapse: collapse;">
+            const mailHtml = `
+                <div style="font-family: 'Noto Sans TC', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); padding: 24px; border-radius: 12px 12px 0 0;">
+                        <h2 style="color: white; margin: 0;">📋 問題回報通知</h2>
+                        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">新回報已提交</p>
+                    </div>
+                    <div style="background: white; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                             <tr>
-                                <td style="padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; width: 100px;">
-                                    商化
-                                </td>
-                                <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">
-                                    ${reporter}
-                                </td>
+                                <td style="padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; width: 100px; font-size: 13px;">追蹤編號</td>
+                                <td style="padding: 10px 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #2563eb; font-weight: 700;">${trackingId}</td>
                             </tr>
                             <tr>
-                                <td style="padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">
-                                    回報時間
-                                </td>
-                                <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">
-                                    ${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}
-                                </td>
+                                <td style="padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px;">回報人</td>
+                                <td style="padding: 10px 12px; border: 1px solid #e2e8f0; font-size: 13px;">${reporter}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px;">回報標題</td>
+                                <td style="padding: 10px 12px; border: 1px solid #e2e8f0; font-size: 13px;">${title}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; font-size: 13px;">提交時間</td>
+                                <td style="padding: 10px 12px; border: 1px solid #e2e8f0; font-size: 13px;">${submittedAt}</td>
                             </tr>
                         </table>
-                        
-                        ${photo ? `<p style="margin-top: 20px; color: #64748b;">📎 附件: ${photo.originalFilename}</p>` : ''}
-                        
-                        <div style="margin-top: 30px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #94a3b8;">
-                            此郵件由系統自動發送，請勿直接回覆
+                        <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                            <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">回報內容：</div>
+                            <div style="font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${content}</div>
+                        </div>
+                        ${photo ? `<div style="padding: 10px; background: #f0f9ff; border-radius: 8px; font-size: 13px; color: #0369a1;">📎 附件: ${photo.originalFilename}</div>` : ''}
+                        <div style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #94a3b8; text-align: center;">
+                            此郵件由系統自動發送，請勿直接回覆 · 追蹤編號：${trackingId}
                         </div>
                     </div>
-                `,
+                </div>
+            `;
+
+            const mailOptions = {
+                from: process.env.GMAIL_USER,
+                to: TARGET_EMAIL,
+                subject: `[${trackingId}] ${title}`,
+                html: mailHtml
             };
 
             if (photo) {
-                mailOptions.attachments = [{
-                    filename: photo.originalFilename,
-                    path: photo.path,
-                }];
+                mailOptions.attachments = [{ filename: photo.originalFilename, path: photo.path }];
             }
 
             try {
                 await transporter.sendMail(mailOptions);
-                console.log(`[${new Date().toISOString()}] 回報已發送: ${title} by ${reporter}`);
-                res.status(200).json({ success: true, message: '回報已送出' });
+                console.log(`[${new Date().toISOString()}] Report sent: ${trackingId}`);
+
+                // Cleanup
+                if (photo) {
+                    try { fs.unlinkSync(photo.path); } catch (e) {}
+                }
+
+                res.status(200).json({ success: true, message: '回報已送出', trackingId });
             } catch (error) {
-                console.error('發送失敗:', error);
+                console.error('Email error:', error);
                 res.status(500).json({ success: false, message: error.message || '發送失敗' });
             }
 
