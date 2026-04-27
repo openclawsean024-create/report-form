@@ -1,6 +1,7 @@
 {
   "name": "report-form",
   "version": "1.0.0",
+  "type": "module",
   "description": "門市巡訪回報系統",
   "main": "server.js",
   "scripts": {

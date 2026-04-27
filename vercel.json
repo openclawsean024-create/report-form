@@ -43,10 +43,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "GMAIL_USER": "@gmail-user",
-    "GMAIL_APP_PASSWORD": "@gmail-app-password",
-    "TARGET_EMAIL": "@target-email"
-  }
+  ]
 }
