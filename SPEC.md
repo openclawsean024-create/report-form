@@ -47,12 +47,18 @@
 | 回報人 | text | ✅ | 非空 |
 | 回報標題 | text | ✅ | 非空 |
 | 回報內容 | textarea | ✅ | 非空 |
-| 上傳照片 | file (image) | ❌ | JPG/PNG，最大 10MB |
+| 上傳照片 | file (image) | ❌ | 自動壓縮 JPEG（每張≤1MB），最多 10 張 |
 
-**功能：**
-- Client-side 即時驗證（必填欄位）
-- 拖曳上傳 + 點擊選擇
-- 圖片預覽
+**圖片上傳功能：**
+- Client-side 自動壓縮（`browser-image-compression`）
+  - 輸出格式：JPEG
+  - 每張檔案不大於 1MB
+  - 畫質 85%（`initialQuality: 0.85`）
+  - 最大尺寸：1920px（寬或高）
+  - 使用 Web Worker 避免 UI 阻塞
+- 支援拖曳上傳 + 點擊選擇
+- 最多 10 張，選填
+- 圖片預覽格（可刪除已選圖片）
 - 提交成功後顯示追蹤編號
 
 **提交成功流程：**
@@ -202,6 +208,7 @@
 
 - 所有環境變數透過 Vercel Secrets 設定，不寫入程式碼
 - 檔案上傳僅接受 `image/*` MIME 類型
-- 檔案大小限制：10MB
+- 檔案上傳僅接受 `image/*` MIME 類型
+- 檔案大小限制：50MB（client-side 壓縮至 1MB）
 - Email 附件在發送後自動刪除（本地）
 - 追蹤編號隨機生成，不可推測
