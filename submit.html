@@ -655,7 +655,10 @@
                 if (result.success) {
                     form.style.display = 'none';
                     const tid = result.trackingId || '';
-                    trackingIdDisplay.textContent = tid;
+                    const tidEl = document.getElementById('trackingIdDisplay');
+                    if (tidEl) {
+                        tidEl.textContent = tid;
+                    }
                     trackingResult.classList.add('show');
                     checkStatusBtn.href = `/status?id=${encodeURIComponent(tid)}`;
                     window.scrollTo({ top: 0, behavior: 'smooth' });

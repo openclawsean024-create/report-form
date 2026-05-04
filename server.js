@@ -77,10 +77,10 @@ function generateTrackingId() {
 }
 
 // Submit API
-app.post('/api/submit', upload.single('photo'), async (req, res) => {
+app.post('/api/submit', upload.array('photo', 10), async (req, res) => {
     try {
         const { reporter, title, content } = req.body;
-        const file = req.file;
+        const files = req.files;
 
         if (!reporter || !title || !content) {
             return res.status(400).json({ success: false, message: '請填寫所有必填欄位' });
@@ -96,8 +96,8 @@ app.post('/api/submit', upload.single('photo'), async (req, res) => {
             reporter,
             title,
             content,
-            photo: file ? file.originalname : null,
-            photoPath: file ? file.path : null,
+            photo: files && files.length > 0 ? files.map(f => f.originalname).join(", ") : "",
+            photoPath: files && files.length > 0 ? files.map(f => f.path).join(", ") : "",
             submittedAt,
             status: 'pending',
             createdAt: new Date().toISOString()
@@ -134,7 +134,7 @@ app.post('/api/submit', upload.single('photo'), async (req, res) => {
                         <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">回報內容：</div>
                         <div style="font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${content}</div>
                     </div>
-                    ${file ? `<div style="padding: 10px; background: #f0f9ff; border-radius: 8px; font-size: 13px; color: #0369a1;">📎 附件: ${file.originalname}</div>` : ''}
+                    ${files && files.length > 0 ? `<div style="padding: 10px; background: #f0f9ff; border-radius: 8px; font-size: 13px; color: #0369a1;">📎 附件: ${files.map(f => f.originalname).join(", ")}</div>` : ''}
                     <div style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #94a3b8; text-align: center;">
                         此郵件由系統自動發送，請勿直接回覆 · 追蹤編號：${trackingId}
                     </div>
@@ -149,16 +149,16 @@ app.post('/api/submit', upload.single('photo'), async (req, res) => {
             html: mailHtml
         };
 
-        if (file) {
-            mailOptions.attachments = [{ filename: file.originalname, path: file.path }];
+        if (files && files.length > 0) {
+            mailOptions.attachments = files.map(f => ({ filename: f.originalname, path: f.path }));
         }
 
         await transporter.sendMail(mailOptions);
         console.log(`[${new Date().toISOString()}] Report sent: ${trackingId} - ${title} by ${reporter}`);
 
         // Cleanup uploaded file after email
-        if (file) {
-            try { fs.unlinkSync(file.path); } catch (e) {}
+        if (files && files.length > 0) {
+            files.forEach(f => { try { fs.unlinkSync(f.path); } catch (e) {} });
         }
 
         res.json({ success: true, message: '回報已送出', trackingId });
