@@ -160,39 +160,49 @@
             color: var(--primary);
         }
 
-        .file-name {
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 12px;
-            font-size: 13px;
-            color: var(--success);
-            font-weight: 500;
         }
-
-        .image-preview {
-            margin-top: 12px;
-            display: none;
+        .photo-grid:empty { display: none; }
+        .photo-item {
+            position: relative;
+            width: 90px;
         }
-
-        .image-preview.show {
-            display: block;
-        }
-
-        .image-preview img {
-            max-width: 100%;
-            max-height: 200px;
+        .photo-item img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .image-preview .remove-btn {
+            border: 1px solid var(--border);
             display: block;
-            margin-top: 8px;
-            padding: 6px 12px;
+        }
+        .photo-item .remove-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            border: 2px solid white;
             font-size: 12px;
-            color: var(--error);
-            background: rgba(239, 68, 68, 0.1);
-            border: none;
-            border-radius: 6px;
+            line-height: 20px;
+            text-align: center;
             cursor: pointer;
+            padding: 0;
+        }
+        .photo-item .photo-name {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         input[type="file"] {
@@ -327,13 +337,13 @@
                             <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <div class="upload-text">
-                            <strong>點擊上傳</strong> 或拖曳檔案至此<br>
-                            支援 JPG、PNG 格式
+                            <strong>點擊上傳</strong> 或拖曳檔案至此（可多選）<br>
+                            支援 JPG、PNG 格式，最多 10 張
                         </div>
                         <div class="file-name" id="fileName"></div>
-                        <div class="image-preview" id="imagePreview"></div>
+                        <div class="photo-grid" id="photoGrid"></div>
                     </div>
-                    <input type="file" id="photo" name="photo" accept="image/*">
+                    <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg" multiple>
                 </div>
 
                 <button type="submit" class="submit-btn" id="submitBtn">
@@ -348,95 +358,95 @@
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('photo');
-        const fileName = document.getElementById('fileName');
-        const imagePreview = document.getElementById('imagePreview');
+        const photoGrid = document.getElementById('photoGrid');
         const message = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
+        const MAX_FILES = 10;
+        let selectedFiles = [];
 
-        // 上傳區域點擊
+        // Upload area click
         uploadArea.addEventListener('click', () => fileInput.click());
 
-        // 拖曳上傳
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
+        // Drag & drop
+        uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', e => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                updateFileName(files[0]);
-            }
+            handleFiles(e.dataTransfer.files);
         });
 
-        // 檔案選擇
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                updateFileName(fileInput.files[0]);
-            }
-        });
+        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
 
-        function updateFileName(file) {
-            fileName.textContent = `✓ ${file.name}`;
-            uploadArea.classList.add('has-file');
-            
-            // 顯示圖片預覽
-            if (file.type.startsWith('image/')) {
+        function handleFiles(files) {
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (selectedFiles.length >= MAX_FILES) {
+                message.textContent = '✗ 最多只能上傳 10 張照片';
+                message.className = 'message show error';
+                return;
+            }
+            const remaining = MAX_FILES - selectedFiles.length;
+            const toAdd = imageFiles.slice(0, remaining);
+            selectedFiles = selectedFiles.concat(toAdd);
+            renderPhotoGrid();
+        }
+
+        function removePhoto(index) {
+            selectedFiles.splice(index, 1);
+            renderPhotoGrid();
+        }
+
+        function renderPhotoGrid() {
+            photoGrid.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'photo-item';
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.innerHTML = `<img src="${e.target.result}" alt="預覽"><button type="button" class="remove-btn" onclick="removeImage()">移除圖片</button>`;
-                    imagePreview.classList.add('show');
+                reader.onload = e => {
+                    item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn" data-index="${index}">×</button><div class="photo-name">${file.name}</div>`;
                 };
                 reader.readAsDataURL(file);
-            }
+                photoGrid.appendChild(item);
+            });
+            photoGrid.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    removePhoto(parseInt(btn.dataset.index));
+                });
+            });
+            if (selectedFiles.length > 0) uploadArea.classList.add('has-file');
+            else uploadArea.classList.remove('has-file');
         }
 
-        function removeImage() {
-            fileInput.value = '';
-            fileName.textContent = '';
-            imagePreview.innerHTML = '';
-            imagePreview.classList.remove('show');
-            uploadArea.classList.remove('has-file');
-        }
-
-        // 表單提交
-        form.addEventListener('submit', async (e) => {
+        // Form submit
+        form.addEventListener('submit', async e => {
             e.preventDefault();
-            
             message.className = 'message';
             message.textContent = '';
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
             const formData = new FormData(form);
-            
+            // Replace photo field with all selected files
+            formData.delete('photo');
+            selectedFiles.forEach(file => formData.append('photo', file));
+
             try {
-                const response = await fetch('/api/submit', {
-                    method: 'POST',
-                    body: formData
-                });
-
+                const response = await fetch('/api/submit', { method: 'POST', body: formData });
                 const result = await response.json();
-
                 if (result.success) {
                     message.textContent = '✓ 回報已送出！我們會盡快處理。';
-                    message.classList.add('show', 'success');
+                    message.className = 'message show success';
                     form.reset();
+                    selectedFiles = [];
+                    photoGrid.innerHTML = '';
                     uploadArea.classList.remove('has-file');
-                    fileName.textContent = '';
                 } else {
                     throw new Error(result.message || '提交失敗');
                 }
             } catch (error) {
                 message.textContent = '✗ 提交失敗：' + error.message;
-                message.classList.add('show', 'error');
+                message.className = 'message show error';
             } finally {
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
