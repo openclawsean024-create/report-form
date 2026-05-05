@@ -34,6 +34,7 @@
                 radial-gradient(circle at 90% 80%, rgba(14,165,233,0.04) 0%, transparent 40%);
         }
 
+        /* Nav */
         .nav {
             background: rgba(255,255,255,0.9);
             backdrop-filter: blur(12px);
@@ -74,6 +75,7 @@
         }
         .nav-back:hover { color: var(--text); background: #f1f5f9; }
 
+        /* Main layout */
         .page-wrapper {
             flex: 1;
             display: flex;
@@ -91,6 +93,7 @@
             overflow: hidden;
         }
 
+        /* Card header */
         .card-header {
             padding: 36px 40px 28px;
             border-bottom: 1px solid var(--border);
@@ -103,7 +106,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--primary), #0ea5e9);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
         .header-eyebrow {
             font-size: 12px;
@@ -131,8 +134,10 @@
             margin-top: 6px;
         }
 
+        /* Form body */
         .form-body { padding: 32px 40px 40px; }
 
+        /* Form groups */
         .form-group { margin-bottom: 24px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
@@ -180,76 +185,91 @@
         }
         .field-error.show { display: block; }
 
-        /* Multi-file upload */
+        /* Upload area */
         .upload-area {
             border: 2px dashed var(--border);
             border-radius: 12px;
-            padding: 28px 20px;
+            padding: 36px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
             background: var(--bg);
+            position: relative;
         }
         .upload-area:hover { border-color: var(--primary); background: rgba(37,99,235,0.02); }
         .upload-area.dragover { border-color: var(--primary); background: rgba(37,99,235,0.05); transform: scale(1.01); }
+        .upload-area.has-file { border-color: var(--success); background: rgba(34,197,94,0.03); border-style: solid; }
 
         .upload-icon { font-size: 36px; margin-bottom: 10px; }
         .upload-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
         .upload-text strong { color: var(--primary); }
         .upload-hint { font-size: 12px; color: #94a3b8; margin-top: 6px; }
 
-        /* Photo grid */
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+        .file-info {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--success);
+            font-weight: 500;
         }
+        .file-info.show { display: flex; }
+
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .photo-grid:empty { display: none; }
         .photo-item {
             position: relative;
-            aspect-ratio: 1;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            background: var(--bg);
+            width: 90px;
         }
         .photo-item img {
-            width: 100%;
-            height: 100%;
+            width: 90px;
+            height: 90px;
             object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: block;
         }
         .photo-item .remove-btn {
             position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 24px;
-            height: 24px;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.6);
+            background: #ef4444;
             color: white;
-            border: none;
+            border: 2px solid white;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            line-height: 1;
-            transition: background 0.2s;
+            padding: 0;
         }
-        .photo-item .remove-btn:hover { background: rgba(239,68,68,0.8); }
         .photo-item .photo-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 4px 6px;
-            background: rgba(0,0,0,0.5);
-            color: white;
             font-size: 10px;
-            white-space: nowrap;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 2px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
+            font-family: inherit;
+            color: var(--error);
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .remove-file:hover { background: rgba(239,68,68,0.15); }
 
         input[type="file"] { display: none; }
 
@@ -315,7 +335,7 @@
         }
         .tracking-result.show { display: block; }
         .tracking-id-box {
-            background: linear-gradient(135deg, var(--primary), #0ea5e9);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
             border-radius: 12px;
             padding: 20px;
@@ -349,7 +369,6 @@
             .form-body { padding: 24px 20px 32px; }
             .card-header { padding: 28px 20px 20px; }
             .form-row { grid-template-columns: 1fr; gap: 0; }
-            .photo-grid { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -396,9 +415,9 @@
                             <div class="field-error" id="reporterError">請輸入回報人姓名</div>
                         </div>
                         <div class="form-group">
-                            <label for="title">店名 <span class="required">*</span></label>
-                            <input type="text" id="title" name="title" placeholder="請輸入店家名稱">
-                            <div class="field-error" id="titleError">請輸入店名</div>
+                            <label for="title">回報標題 <span class="required">*</span></label>
+                            <input type="text" id="title" name="title" placeholder="簡述問題標題">
+                            <div class="field-error" id="titleError">請輸入回報標題</div>
                         </div>
                     </div>
 
@@ -409,17 +428,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label>上傳照片 <span class="optional">（選填，最多 10 張）</span></label>
+                        <label>上傳照片 <span class="optional">（選填）</span></label>
                         <div class="upload-area" id="uploadArea">
                             <div class="upload-icon">📷</div>
                             <div class="upload-text">
                                 <strong>點擊上傳</strong> 或拖曳檔案至此<br>
-                                支援 JPG、PNG 格式，可同時選擇多張
+                                支援 JPG、PNG 格式
                             </div>
-                            <div class="upload-hint">每張圖片不限制檔案大小（系統會自動壓縮至 1MB 以內）</div>
+                            <div class="upload-hint">每張圖片不限制大小，系統會自動壓縮至 1MB 以內</div>
+                            <div class="photo-grid" id="photoGrid"></div>
                         </div>
                         <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg" multiple>
-                        <div class="photo-grid" id="photoGrid"></div>
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">
@@ -447,9 +466,7 @@
         </div>
     </div>
 
-    <script type="module">
-        import imageCompression from 'browser-image-compression';
-
+    <script>
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('photo');
@@ -461,27 +478,8 @@
         const trackingResult = document.getElementById('trackingResult');
         const trackingIdDisplay = document.getElementById('trackingIdDisplay');
         const checkStatusBtn = document.getElementById('checkStatusBtn');
-
-        // 50MB per file limit
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
         let selectedFiles = [];
-
-        // Show/hide compression spinner
-        function showCompressSpinner(msg) {
-            const existing = document.getElementById('compressSpinner');
-            if (existing) existing.remove();
-            const spinner = document.createElement('div');
-            spinner.id = 'compressSpinner';
-            spinner.style.cssText = 'text-align:center;padding:12px;font-size:13px;color:#2563eb;font-weight:500;';
-            spinner.textContent = msg;
-            uploadArea.parentNode.insertBefore(spinner, uploadArea.nextSibling);
-            return spinner;
-        }
-
-        function removeCompressSpinner() {
-            const existing = document.getElementById('compressSpinner');
-            if (existing) existing.remove();
-        }
 
         // Upload area click
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -499,61 +497,19 @@
 
         function handleFiles(files) {
             const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-            if (imageFiles.length === 0) return;
             if (selectedFiles.length >= 10) {
                 showAlert('error', '最多只能上傳 10 張照片');
                 return;
             }
             const remaining = 10 - selectedFiles.length;
             const toAdd = imageFiles.slice(0, remaining);
-
-            const spinner = showCompressSpinner(`🖼️ 圖片壓縮中，請稍候... (0/${toAdd.length})`);
-
-            let completed = 0;
-            const results = [];
-
-            // Process sequentially to avoid UI jank
-            (async () => {
-                for (const file of toAdd) {
-                    try {
-                        const compressed = await compressImage(file);
-                        results.push({ file: compressed, error: null });
-                    } catch (err) {
-                        results.push({ file, error: err.message });
-                    }
-                    completed++;
-                    spinner.textContent = `🖼️ 圖片壓縮中，請稍候... (${completed}/${toAdd.length})`;
-                }
-
-                removeCompressSpinner();
-
-                results.forEach(({ file: f, error }) => {
-                    if (error) {
-                        showAlert('error', `處理失敗：${f.name} — ${error}`);
-                    } else if (f.size > MAX_FILE_SIZE) {
-                        showAlert('error', `檔案過大：${f.name}（限 50MB以內）`);
-                    } else {
-                        selectedFiles.push(f);
-                    }
-                });
-                renderPhotoGrid();
-            })();
-        }
-
-        // Compress image using browser-image-compression
-        // Output: JPEG, max 1MB, quality ~0.8
-        async function compressImage(file) {
-            const options = {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true,
-                fileType: 'image/jpeg',
-                initialQuality: 0.85,
-                onProgress: (percent) => {
-                    // Progress tracked per-file via completed count above
-                }
-            };
-            return await imageCompression(file, options);
+            const oversized = toAdd.filter(f => f.size > MAX_FILE_SIZE);
+            if (oversized.length > 0) {
+                showAlert('error', `檔案過大：${oversized[0].name}（限 50MB 以內）`);
+                return;
+            }
+            selectedFiles = selectedFiles.concat(toAdd);
+            renderPhotoGrid();
         }
 
         function removePhoto(index) {
@@ -567,13 +523,10 @@
                 const item = document.createElement('div');
                 item.className = 'photo-item';
                 const reader = new FileReader();
-                reader.onload = e => item.querySelector('img').src = e.target.result;
+                reader.onload = e => {
+                    item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn" data-index="${index}">×</button><div class="photo-name">${file.name}</div>`;
+                };
                 reader.readAsDataURL(file);
-                item.innerHTML = `
-                    <img src="" alt="">
-                    <button type="button" class="remove-btn" data-index="${index}">×</button>
-                    <div class="photo-name">${file.name}</div>
-                `;
                 photoGrid.appendChild(item);
             });
             photoGrid.querySelectorAll('.remove-btn').forEach(btn => {
@@ -631,18 +584,12 @@
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
-            const formData = new FormData(form);
-            selectedFiles.forEach(file => {
-                if (file.size > MAX_FILE_SIZE) {
-                    showAlert('error', `檔案過大：${file.name}`);
-                    submitBtn.classList.remove('loading');
-                    submitBtn.disabled = false;
-                    return;
-                }
-                formData.append('photo', file);
-            });
-
-            if (submitBtn.disabled) return;
+            // Use selectedFiles directly (avoid form file input which only has last selection)
+            const formData = new FormData();
+            formData.append('reporter', document.getElementById('reporter').value.trim());
+            formData.append('title', document.getElementById('title').value.trim());
+            formData.append('content', document.getElementById('content').value.trim());
+            selectedFiles.forEach(file => formData.append('photo', file));
 
             try {
                 const response = await fetch('/api/submit', {
@@ -655,10 +602,7 @@
                 if (result.success) {
                     form.style.display = 'none';
                     const tid = result.trackingId || '';
-                    const tidEl = document.getElementById('trackingIdDisplay');
-                    if (tidEl) {
-                        tidEl.textContent = tid;
-                    }
+                    trackingIdDisplay.textContent = tid;
                     trackingResult.classList.add('show');
                     checkStatusBtn.href = `/status?id=${encodeURIComponent(tid)}`;
                     window.scrollTo({ top: 0, behavior: 'smooth' });

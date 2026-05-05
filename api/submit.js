@@ -30,7 +30,6 @@ function saveReports(reports) {
     } catch (e) { console.error('Save error:', e); }
 }
 
-// Read Node.js stream body fully
 function readBody(req) {
     return new Promise((resolve, reject) => {
         const chunks = [];
@@ -40,47 +39,34 @@ function readBody(req) {
     });
 }
 
-// Byte-level multipart parser (handles binary content correctly)
 function parseMultipartBuffer(buffer, boundary) {
     const fields = {};
     const files = [];
-
     const boundaryBuffer = Buffer.from('--' + boundary);
     const headerEndMarker = Buffer.from([13, 10, 13, 10]); // \r\n\r\n
-
     let pos = 0;
 
     while (pos < buffer.length) {
-        // Find next boundary
         const boundaryIdx = buffer.indexOf(boundaryBuffer, pos);
         if (boundaryIdx === -1) break;
 
         const partStart = boundaryIdx + boundaryBuffer.length;
-
-        // Skip \r\n after boundary, check for -- (end)
         let ptr = partStart;
-        if (buffer[ptr] === 13) ptr++; // \r
-        if (buffer[ptr] === 10) ptr++; // \n
-        if (buffer[ptr] === 45 && buffer[ptr + 1] === 45) break; // '--' end marker
+        if (buffer[ptr] === 13) ptr++;
+        if (buffer[ptr] === 10) ptr++;
+        if (buffer[ptr] === 45 && buffer[ptr + 1] === 45) break;
 
-        // Find header end marker
         const headerEndIdx = buffer.indexOf(headerEndMarker, ptr);
         if (headerEndIdx === -1) { pos = boundaryIdx + 1; continue; }
 
         const contentStart = headerEndIdx + 4;
-        const contentStartCheck = headerEndIdx + 4;
-
-        // Find next boundary (after content)
-        const nextBoundaryIdx = buffer.indexOf(boundaryBuffer, contentStartCheck);
-
-        // Content ends before \r\n preceding next boundary
+        const nextBoundaryIdx = buffer.indexOf(boundaryBuffer, contentStart);
         const contentEnd = nextBoundaryIdx === -1
             ? buffer.length
-            : nextBoundaryIdx - 2; // Remove trailing \r\n
+            : nextBoundaryIdx - 2;
 
         const headerSlice = buffer.slice(ptr, headerEndIdx);
         const contentSlice = buffer.slice(contentStart, contentEnd);
-
         const headerStr = headerSlice.toString('utf8');
         const nameMatch = headerStr.match(/name="([^"]+)"/);
         const filenameMatch = headerStr.match(/filename="([^"]+)"/);
@@ -89,17 +75,14 @@ function parseMultipartBuffer(buffer, boundary) {
         const fieldName = nameMatch[1];
 
         if (filenameMatch) {
-            const filename = filenameMatch[1];
-            files.push({ name: fieldName, filename, data: contentSlice });
+            files.push({ name: fieldName, filename: filenameMatch[1], data: contentSlice });
         } else {
             const text = contentSlice.toString('utf8').replace(/\r?\n$/, '');
             if (!fields[fieldName]) fields[fieldName] = [];
             fields[fieldName].push(text);
         }
-
         pos = nextBoundaryIdx !== -1 ? nextBoundaryIdx : buffer.length;
     }
-
     return { fields, files };
 }
 
@@ -190,42 +173,32 @@ export default async function handler(req, res) {
                         </div>
                     </div>`;
 
-                    const mailOptions = {
+                    const attachments = photos.map(p => ({
+                        filename: p.filename,
+                        content: p.data,
+                    }));
+
+                    await transporter.sendMail({
                         from: gmailUser,
                         to: targetEmail,
                         subject: `[${trackingId}] ${title}`,
                         html: mailHtml,
-                    };
+                        attachments,
+                    });
 
-                    if (photos.length > 0) {
-                        mailOptions.attachments = photos.map(p => ({
-                            filename: p.filename,
-                            content: p.data,
-                        }));
-                    }
-
-                    try {
-                        await transporter.sendMail(mailOptions);
-                        console.log(`Report: ${trackingId}, ${photos.length} photos`);
-                    } catch (emailErr) {
-                        console.error('Email error:', emailErr.message);
-                    }
+                    console.log(`Report: ${trackingId}, ${photos.length} photos`);
                 }
 
                 res.status(200).json({ success: true, message: '回報已送出', trackingId });
-                return;
-
-            } catch (parseErr) {
-                console.error('Multipart parse error:', parseErr);
-                res.status(400).json({ success: false, message: '表單解析錯誤：' + parseErr.message });
-                return;
+            } catch (err) {
+                console.error('Form parse error:', err);
+                res.status(400).json({ success: false, message: '表單解析錯誤' });
             }
+        } else {
+            res.status(400).json({ success: false, message: '請使用 multipart/form-data' });
         }
-
-        res.status(400).json({ success: false, message: '需要 multipart/form-data' });
-
-    } catch (outerErr) {
-        console.error('Submit handler error:', outerErr);
-        res.status(500).json({ success: false, message: '伺服器錯誤：' + outerErr.message });
+    } catch (err) {
+        console.error('Handler error:', err);
+        res.status(500).json({ success: false, message: '伺服器錯誤' });
     }
 }
