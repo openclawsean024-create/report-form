@@ -354,7 +354,9 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { compressImage } from '/src/lib/imageCompression.js';
+
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('photo');
@@ -363,9 +365,18 @@
         const submitBtn = document.getElementById('submitBtn');
         const MAX_FILES = 10;
         let selectedFiles = [];
+        let isCompressing = false;
+
+        function setUploadBusy(busy) {
+            isCompressing = busy;
+            uploadArea.style.pointerEvents = busy ? 'none' : 'auto';
+            uploadArea.style.opacity = busy ? '0.6' : '1';
+        }
 
         // Upload area click
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('click', () => {
+            if (!isCompressing) fileInput.click();
+        });
 
         // Drag & drop
         uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
@@ -373,12 +384,14 @@
         uploadArea.addEventListener('drop', e => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
+            if (!isCompressing) handleFiles(e.dataTransfer.files);
         });
 
-        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        fileInput.addEventListener('change', () => {
+            if (!isCompressing) handleFiles(fileInput.files);
+        });
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
             const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
             if (selectedFiles.length >= MAX_FILES) {
                 message.textContent = '✗ 最多只能上傳 10 張照片';
@@ -387,8 +400,23 @@
             }
             const remaining = MAX_FILES - selectedFiles.length;
             const toAdd = imageFiles.slice(0, remaining);
-            selectedFiles = selectedFiles.concat(toAdd);
-            renderPhotoGrid();
+
+            setUploadBusy(true);
+            message.textContent = '🖼 正在壓縮圖片，請稍候...';
+            message.className = 'message show';
+            try {
+                const compressed = await Promise.all(toAdd.map(f => compressImage(f)));
+                selectedFiles = selectedFiles.concat(compressed);
+                renderPhotoGrid();
+                message.className = 'message';
+                message.textContent = '';
+            } catch (err) {
+                message.textContent = '✗ 圖片壓縮失敗：' + err.message;
+                message.className = 'message show error';
+            } finally {
+                setUploadBusy(false);
+                fileInput.value = '';
+            }
         }
 
         function removePhoto(index) {

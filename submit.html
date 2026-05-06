@@ -435,7 +435,7 @@
                                 <strong>點擊上傳</strong> 或拖曳檔案至此<br>
                                 支援 JPG、PNG 格式
                             </div>
-                            <div class="upload-hint">每張圖片不限制大小，系統會自動壓縮至 1MB 以內</div>
+                            <div class="upload-hint">每張圖片自動壓縮為 JPG，確保在 1MB 以內</div>
                             <div class="photo-grid" id="photoGrid"></div>
                         </div>
                         <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg" multiple>
@@ -466,7 +466,9 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { compressImage } from '/src/lib/imageCompression.js';
+
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('photo');
@@ -480,9 +482,18 @@
         const checkStatusBtn = document.getElementById('checkStatusBtn');
         const MAX_FILE_SIZE = 50 * 1024 * 1024;
         let selectedFiles = [];
+        let isCompressing = false;
+
+        function setUploadBusy(busy) {
+            isCompressing = busy;
+            uploadArea.style.pointerEvents = busy ? 'none' : 'auto';
+            uploadArea.style.opacity = busy ? '0.6' : '1';
+        }
 
         // Upload area click
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('click', () => {
+            if (!isCompressing) fileInput.click();
+        });
 
         // Drag & drop
         uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
@@ -490,12 +501,14 @@
         uploadArea.addEventListener('drop', e => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
+            if (!isCompressing) handleFiles(e.dataTransfer.files);
         });
 
-        fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+        fileInput.addEventListener('change', () => {
+            if (!isCompressing) handleFiles(fileInput.files);
+        });
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
             const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
             if (selectedFiles.length >= 10) {
                 showAlert('error', '最多只能上傳 10 張照片');
@@ -508,8 +521,20 @@
                 showAlert('error', `檔案過大：${oversized[0].name}（限 50MB 以內）`);
                 return;
             }
-            selectedFiles = selectedFiles.concat(toAdd);
-            renderPhotoGrid();
+
+            setUploadBusy(true);
+            showAlert('success', '🖼 正在壓縮圖片，請稍候...');
+            try {
+                const compressed = await Promise.all(toAdd.map(f => compressImage(f)));
+                selectedFiles = selectedFiles.concat(compressed);
+                renderPhotoGrid();
+                hideAlert();
+            } catch (err) {
+                showAlert('error', '圖片壓縮失敗：' + err.message);
+            } finally {
+                setUploadBusy(false);
+                fileInput.value = '';
+            }
         }
 
         function removePhoto(index) {
