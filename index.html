@@ -466,7 +466,10 @@
                 const response = await fetch('/api/submit', { method: 'POST', body: formData });
                 const result = await response.json();
                 if (result.success) {
-                    message.textContent = '✓ 回報已送出！我們會盡快處理。';
+                    const trackingMsg = result.trackingId
+                        ? `✓ 回報已送出！我們會盡快處理。<br>追蹤編號：<strong>${result.trackingId}</strong>`
+                        : '✓ 回報已送出！我們會盡快處理。';
+                    message.innerHTML = trackingMsg;
                     message.className = 'message show success';
                     form.reset();
                     selectedFiles = [];
