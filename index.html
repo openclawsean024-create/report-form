@@ -355,7 +355,10 @@
     </div>
 
     <script type="module">
-        import { compressImage } from '/src/lib/imageCompression.js';
+        import imageCompression from 'https://esm.sh/browser-image-compression@2';
+        async function compressImage(file) {
+            return imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true, fileType: 'image/jpeg' });
+        }
 
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
