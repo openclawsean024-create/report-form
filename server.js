@@ -141,9 +141,14 @@ app.post('/api/submit', upload.single('photo'), async (req, res) => {
             fs.unlinkSync(file.path);
         }
 
-        console.log(`[${new Date().toISOString()}] 回報已發送: ${title} by ${reporter}`);
+        // 產生追蹤 ID
+        const timestamp = Date.now().toString(36).toUpperCase();
+        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const trackingId = `RPT-${timestamp}-${random}`;
 
-        res.json({ success: true, message: '回報已送出' });
+        console.log(`[${new Date().toISOString()}] 回報已發送: ${title} by ${reporter} [${trackingId}]`);
+
+        res.json({ success: true, trackingId, message: '回報已送出' });
 
     } catch (error) {
         console.error('發送失敗:', error);
