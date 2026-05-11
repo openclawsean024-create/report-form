@@ -6,6 +6,21 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, '..', 'data', 'reports.json');
 
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+const RECIPIENTS = [
+    'mark0729@chinacom.tw',
+    'sean0407@gmail.com',
+    'roger.chang@chinacom.tw',
+    'amy@chinacom.tw',
+    'jace@chinacom.tw',
+    'sli11@logitech.com',
+];
+
 function generateTrackingId() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let id = 'RPT-';
@@ -99,12 +114,12 @@ export default async function handler(req, res) {
 
         if (contentType.includes('multipart/form-data')) {
             try {
-                const boundaryMatch = contentType.match(/boundary=(.+)$/);
+                const boundaryMatch = contentType.match(/boundary=("?)([^";\s]+)\1/);
                 if (!boundaryMatch) {
                     res.status(400).json({ success: false, message: '找不到上傳boundary' });
                     return;
                 }
-                const boundary = boundaryMatch[1];
+                const boundary = boundaryMatch[2];
 
                 const rawBuffer = await readBody(req);
                 const { fields, files } = parseMultipartBuffer(rawBuffer, boundary);
@@ -137,9 +152,11 @@ export default async function handler(req, res) {
 
                 const gmailUser = process.env.GMAIL_USER;
                 const gmailPass = process.env.GMAIL_APP_PASSWORD;
-                const targetEmail = process.env.TARGET_EMAIL;
+                const toList = process.env.TARGET_EMAIL
+                    ? process.env.TARGET_EMAIL.split(',').map(e => e.trim())
+                    : RECIPIENTS;
 
-                if (gmailUser && gmailPass && targetEmail) {
+                if (gmailUser && gmailPass) {
                     const transporter = nodemailer.createTransport({
                         service: 'gmail',
                         auth: { user: gmailUser, pass: gmailPass },
@@ -180,7 +197,7 @@ export default async function handler(req, res) {
 
                     await transporter.sendMail({
                         from: gmailUser,
-                        to: targetEmail,
+                        to: toList.join(', '),
                         subject: `[${trackingId}] ${title}`,
                         html: mailHtml,
                         attachments,

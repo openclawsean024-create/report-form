@@ -427,6 +427,14 @@
             renderPhotoGrid();
         }
 
+        photoGrid.addEventListener('click', e => {
+            const btn = e.target.closest('.remove-btn');
+            if (btn) {
+                e.stopPropagation();
+                removePhoto(parseInt(btn.dataset.index));
+            }
+        });
+
         function renderPhotoGrid() {
             photoGrid.innerHTML = '';
             selectedFiles.forEach((file, index) => {
@@ -438,12 +446,6 @@
                 };
                 reader.readAsDataURL(file);
                 photoGrid.appendChild(item);
-            });
-            photoGrid.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    removePhoto(parseInt(btn.dataset.index));
-                });
             });
             if (selectedFiles.length > 0) uploadArea.classList.add('has-file');
             else uploadArea.classList.remove('has-file');
