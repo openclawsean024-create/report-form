@@ -352,7 +352,6 @@
                 </div>
 
                 <div style="display:flex;gap:12px;">
-                    <button type="button" class="submit-btn" style="background:#475569;" id="draftBtn">儲存草稿</button>
                     <button type="submit" class="submit-btn" id="submitBtn">
                         <span class="spinner"></span>
                         <span class="btn-text">送出回報</span>
@@ -370,39 +369,10 @@
         const imagePreview = document.getElementById('imagePreview');
         const message = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
-        const draftBtn = document.getElementById('draftBtn');
-        const DRAFT_KEY = 'report-form-draft-v1';
 
         // 上傳區域點擊
         uploadArea.addEventListener('click', () => fileInput.click());
 
-        function getDraftPayload() {
-            return {
-                reporter: document.getElementById('reporter').value,
-                title: document.getElementById('title').value,
-                content: document.getElementById('content').value,
-                savedAt: new Date().toISOString()
-            };
-        }
-
-        function saveDraft() {
-            localStorage.setItem(DRAFT_KEY, JSON.stringify(getDraftPayload()));
-            message.textContent = '✓ 草稿已儲存到本機';
-            message.className = 'message show success';
-        }
-
-        function restoreDraft() {
-            try {
-                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-                if (!draft) return;
-                document.getElementById('reporter').value = draft.reporter || '';
-                document.getElementById('title').value = draft.title || '';
-                document.getElementById('content').value = draft.content || '';
-            } catch (_) {}
-        }
-
-        draftBtn.addEventListener('click', saveDraft);
-        restoreDraft();
 
         // 拖曳上傳
         uploadArea.addEventListener('dragover', (e) => {
@@ -565,7 +535,6 @@
                     imagePreview.innerHTML = '';
                     imagePreview.classList.remove('show');
                     uploadedFiles = [];
-                    localStorage.removeItem(DRAFT_KEY);
                 } else {
                     throw new Error(result.message || '提交失敗');
                 }
