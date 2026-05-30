@@ -146,7 +146,7 @@ export default async function handler(req, res) {
                     });
 
                     const photoList = photos.length > 0
-                        ? photos.map(p => `<div style="padding:8px 12px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1;margin-bottom:6px;">📎 ${p.filename}</div>`).join('')
+                        ? photos.map((p, i) => `<div style="margin-bottom:12px;"><img src="cid:photo_${i}" style="max-width:100%;border-radius:8px;display:block;" alt="${p.filename}"><div style="font-size:12px;color:#94a3b8;margin-top:4px;">${p.filename}</div></div>`).join('')
                         : '<div style="padding:8px 12px;background:#f8fafc;border-radius:8px;font-size:13px;color:#94a3b8;">無附件</div>';
 
                     const mailHtml = `<div style="font-family:'Noto Sans TC',Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
@@ -173,9 +173,10 @@ export default async function handler(req, res) {
                         </div>
                     </div>`;
 
-                    const attachments = photos.map(p => ({
+                    const attachments = photos.map((p, i) => ({
                         filename: p.filename,
                         content: p.data,
+                        cid: `photo_${i}`,
                     }));
 
                     await transporter.sendMail({
