@@ -133,7 +133,7 @@ app.post('/api/submit', upload.array('photo', 10), async (req, res) => {
                         <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">回報內容：</div>
                         <div style="font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${content}</div>
                     </div>
-                    ${files && files.length > 0 ? `<div style="padding: 10px; background: #f0f9ff; border-radius: 8px; font-size: 13px; color: #0369a1;">📎 附件: ${files.map(f => f.originalname).join(', ')}</div>` : ''}
+                    ${files && files.length > 0 ? `<div style="margin-bottom:16px;"><div style="font-weight:600;font-size:13px;margin-bottom:8px;">附件（${files.length} 張）：</div>${files.map((f, i) => `<div style="margin-bottom:12px;"><img src="cid:photo_${i}" style="max-width:100%;border-radius:8px;display:block;" alt="${f.originalname}"><div style="font-size:12px;color:#94a3b8;margin-top:4px;">${f.originalname}</div></div>`).join('')}</div>` : ''}
                     <div style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #94a3b8; text-align: center;">
                         此郵件由系統自動發送，請勿直接回覆 · 追蹤編號：${trackingId}
                     </div>
@@ -149,7 +149,7 @@ app.post('/api/submit', upload.array('photo', 10), async (req, res) => {
         };
 
         if (files && files.length > 0) {
-            mailOptions.attachments = files.map(f => ({ filename: f.originalname, path: f.path }));
+            mailOptions.attachments = files.map((f, i) => ({ filename: f.originalname, path: f.path, cid: `photo_${i}` }));
         }
 
         await transporter.sendMail(mailOptions);
