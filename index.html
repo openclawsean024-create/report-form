@@ -160,49 +160,52 @@
             color: var(--primary);
         }
 
-        .photo-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .file-name {
             margin-top: 12px;
+            font-size: 13px;
+            color: var(--success);
+            font-weight: 500;
         }
-        .photo-grid:empty { display: none; }
-        .photo-item {
-            position: relative;
-            width: 90px;
+
+        .image-preview {
+            margin-top: 12px;
+            display: none;
         }
-        .photo-item img {
-            width: 90px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+
+        .image-preview.show {
             display: block;
         }
-        .photo-item .remove-btn {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #ef4444;
-            color: white;
-            border: 2px solid white;
-            font-size: 12px;
-            line-height: 20px;
-            text-align: center;
-            cursor: pointer;
-            padding: 0;
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .photo-item .photo-name {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 2px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+
+        .image-preview .preview-item {
+            display: inline-block;
+            margin: 4px;
+            position: relative;
+        }
+
+        .image-preview .preview-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .image-preview .remove-btn {
+            display: block;
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
         }
 
         input[type="file"] {
@@ -308,7 +311,7 @@
     <div class="container">
         <div class="card">
             <div class="header">
-                <h1>問題回報</h1>
+                <h1>燦坤問題回報</h1>
                 <p>請填寫以下表單，我們會盡快處理</p>
             </div>
             
@@ -322,8 +325,10 @@
 
                 <div class="form-group">
                     <label for="title">巡訪門市 <span class="required">*</span></label>
-                    <input type="text" id="title" name="title" required placeholder="簡述問題標題">
+                    <input type="text" id="title" name="title" required placeholder="填寫門市名稱">
                 </div>
+
+
 
                 <div class="form-group">
                     <label for="content">反應內容 <span class="required">*</span></label>
@@ -331,156 +336,242 @@
                 </div>
 
                 <div class="form-group">
-                    <label>上傳照片</label>
+                    <label>上傳照片 <span class="required">*</span></label>
                     <div class="upload-area" id="uploadArea">
                         <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <div class="upload-text">
-                            <strong>點擊上傳</strong> 或拖曳檔案至此（可多選）<br>
-                            支援 JPG、PNG 格式，最多 10 張
+                            <strong>點擊上傳</strong> 或拖曳檔案至此<br>
+                            支援 JPG、PNG 格式
                         </div>
                         <div class="file-name" id="fileName"></div>
-                        <div class="photo-grid" id="photoGrid"></div>
+                        <div class="image-preview" id="imagePreview"></div>
                     </div>
-                    <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg" multiple>
+                    <input type="file" id="photo" name="photo" accept="image/*,.heic,.heif" multiple>
                 </div>
 
-                <button type="submit" class="submit-btn" id="submitBtn">
-                    <span class="spinner"></span>
-                    <span class="btn-text">送出回報</span>
-                </button>
+                <div style="display:flex;gap:12px;">
+                    <button type="button" class="submit-btn" style="background:#475569;" id="draftBtn">儲存草稿</button>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text">送出回報</span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
-    <script type="module">
-        import imageCompression from 'https://esm.sh/browser-image-compression@2';
-        async function compressImage(file) {
-            return imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920, useWebWorker: true, fileType: 'image/jpeg' });
-        }
-
+    <script>
         const form = document.getElementById('reportForm');
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('photo');
-        const photoGrid = document.getElementById('photoGrid');
+        const fileName = document.getElementById('fileName');
+        const imagePreview = document.getElementById('imagePreview');
         const message = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
-        const MAX_FILES = 10;
-        let selectedFiles = [];
-        let isCompressing = false;
+        const draftBtn = document.getElementById('draftBtn');
+        const DRAFT_KEY = 'report-form-draft-v1';
 
-        function setUploadBusy(busy) {
-            isCompressing = busy;
-            uploadArea.style.pointerEvents = busy ? 'none' : 'auto';
-            uploadArea.style.opacity = busy ? '0.6' : '1';
+        // 上傳區域點擊
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        function getDraftPayload() {
+            return {
+                reporter: document.getElementById('reporter').value,
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                savedAt: new Date().toISOString()
+            };
         }
 
-        // Upload area click
-        uploadArea.addEventListener('click', () => {
-            if (!isCompressing) fileInput.click();
+        function saveDraft() {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(getDraftPayload()));
+            message.textContent = '✓ 草稿已儲存到本機';
+            message.className = 'message show success';
+        }
+
+        function restoreDraft() {
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+                if (!draft) return;
+                document.getElementById('reporter').value = draft.reporter || '';
+                document.getElementById('title').value = draft.title || '';
+                document.getElementById('content').value = draft.content || '';
+            } catch (_) {}
+        }
+
+        draftBtn.addEventListener('click', saveDraft);
+        restoreDraft();
+
+        // 拖曳上傳
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
 
-        // Drag & drop
-        uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-        uploadArea.addEventListener('drop', e => {
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            if (!isCompressing) handleFiles(e.dataTransfer.files);
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileName(files);
+            }
         });
 
+        // 檔案選擇
         fileInput.addEventListener('change', () => {
-            if (!isCompressing) handleFiles(fileInput.files);
+            if (fileInput.files.length) {
+                updateFileName(fileInput.files);
+            }
         });
 
-        async function handleFiles(files) {
-            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-            if (selectedFiles.length >= MAX_FILES) {
-                message.textContent = '✗ 最多只能上傳 10 張照片';
-                message.className = 'message show error';
+        let uploadedFiles = [];
+
+        function updateFileName(files) {
+            uploadedFiles = Array.from(files);
+            if (uploadedFiles.length === 0) return;
+            
+            fileName.textContent = `已選擇 ${uploadedFiles.length} 張圖片`;
+            uploadArea.classList.add('has-file');
+            
+            // 顯示所有圖片預覽
+            imagePreview.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = 'preview-item';
+                        div.innerHTML = `<img src="${e.target.result}" alt="預覽 ${index + 1}">`;
+                        imagePreview.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            imagePreview.classList.add('show');
+        }
+
+        function removeImage() {
+            fileInput.value = '';
+            uploadedFiles = [];
+            fileName.textContent = '';
+            imagePreview.innerHTML = '';
+            imagePreview.classList.remove('show');
+            uploadArea.classList.remove('has-file');
+        }
+
+        // 修改表單提交，使用 uploadedFiles
+        const originalSubmit = form;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!uploadedFiles || uploadedFiles.length === 0) {
+                message.className = 'message error';
+                message.textContent = '請上傳至少一張照片';
+                uploadArea.style.borderColor = '#ef4444';
                 return;
             }
-            const remaining = MAX_FILES - selectedFiles.length;
-            const toAdd = imageFiles.slice(0, remaining);
+            uploadArea.style.borderColor = '';
 
-            setUploadBusy(true);
-            message.textContent = '🖼 正在壓縮圖片，請稍候...';
-            message.className = 'message show';
-            try {
-                const compressed = await Promise.all(toAdd.map(f => compressImage(f)));
-                selectedFiles = selectedFiles.concat(compressed);
-                renderPhotoGrid();
-                message.className = 'message';
-                message.textContent = '';
-            } catch (err) {
-                message.textContent = '✗ 圖片壓縮失敗：' + err.message;
-                message.className = 'message show error';
-            } finally {
-                setUploadBusy(false);
-                fileInput.value = '';
-            }
-        }
-
-        function removePhoto(index) {
-            selectedFiles.splice(index, 1);
-            renderPhotoGrid();
-        }
-
-        function renderPhotoGrid() {
-            photoGrid.innerHTML = '';
-            selectedFiles.forEach((file, index) => {
-                const item = document.createElement('div');
-                item.className = 'photo-item';
-                const reader = new FileReader();
-                reader.onload = e => {
-                    item.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-btn" data-index="${index}">×</button><div class="photo-name">${file.name}</div>`;
-                };
-                reader.readAsDataURL(file);
-                photoGrid.appendChild(item);
-            });
-            photoGrid.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    removePhoto(parseInt(btn.dataset.index));
-                });
-            });
-            if (selectedFiles.length > 0) uploadArea.classList.add('has-file');
-            else uploadArea.classList.remove('has-file');
-        }
-
-        // Form submit
-        form.addEventListener('submit', async e => {
-            e.preventDefault();
             message.className = 'message';
             message.textContent = '';
             submitBtn.classList.add('loading');
             submitBtn.disabled = true;
 
-            const formData = new FormData(form);
-            // Replace photo field with all selected files
-            formData.delete('photo');
-            selectedFiles.forEach(file => formData.append('photo', file));
+            const formData = new FormData();
+            formData.append('reporter', document.getElementById('reporter').value);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('content', document.getElementById('content').value);
+            
+            // 壓縮圖片函數
+            async function compressImage(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const maxSize = 1920;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > height && width > maxSize) {
+                                height = (height * maxSize) / width;
+                                width = maxSize;
+                            } else if (height > maxSize) {
+                                width = (width * maxSize) / height;
+                                height = maxSize;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            canvas.toBlob((blob) => {
+                                resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                            }, 'image/jpeg', 0.8);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
 
+            // 添加多個圖片（壓縮後）
+            const compressedFiles = await Promise.all(uploadedFiles.map(f => compressImage(f)));
+            compressedFiles.forEach(file => {
+                formData.append('photo', file);
+            });
+            
+            // 如果沒有上傳新檔案，使用原始 input
+            if (uploadedFiles.length === 0 && fileInput.files.length > 0) {
+                const compressedLegacy = await Promise.all(Array.from(fileInput.files).map(f => compressImage(f)));
+                compressedLegacy.forEach(file => {
+                    formData.append('photo', file);
+                });
+            }
+            
             try {
-                const response = await fetch('/api/submit', { method: 'POST', body: formData });
-                const result = await response.json();
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const contentType = response.headers.get('content-type');
+                let result;
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    const text = await response.text();
+                    throw new Error(text || '提交失敗');
+                }
+
                 if (result.success) {
                     const trackingMsg = result.trackingId
                         ? `✓ 回報已送出！我們會盡快處理。<br>追蹤編號：<strong>${result.trackingId}</strong>`
                         : '✓ 回報已送出！我們會盡快處理。';
                     message.innerHTML = trackingMsg;
-                    message.className = 'message show success';
+                    message.classList.add('show', 'success');
                     form.reset();
-                    selectedFiles = [];
-                    photoGrid.innerHTML = '';
                     uploadArea.classList.remove('has-file');
+                    fileName.textContent = '';
+                    imagePreview.innerHTML = '';
+                    imagePreview.classList.remove('show');
+                    uploadedFiles = [];
+                    localStorage.removeItem(DRAFT_KEY);
                 } else {
                     throw new Error(result.message || '提交失敗');
                 }
             } catch (error) {
                 message.textContent = '✗ 提交失敗：' + error.message;
-                message.className = 'message show error';
+                message.classList.add('show', 'error');
             } finally {
                 submitBtn.classList.remove('loading');
                 submitBtn.disabled = false;
