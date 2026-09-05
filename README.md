@@ -154,3 +154,5 @@ report-form/
 - **部署：** Vercel
 - **郵件：** Gmail SMTP + Nodemailer
 - **上傳：** Multer / Multiparty
+
+<!-- Last validated: 2026-09-06 by OpenClaw Overnight Dev -->
